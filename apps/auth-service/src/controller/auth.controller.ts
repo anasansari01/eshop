@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from "express";
+import bcrypt from "bcryptjs";
 import prisma from "@packages/libs/prisma";
 import { ValidationError } from "@packages/error-handler";
-import { checkOtpRestriction, trackOtpRequest, validateRegistrationData } from "../utils/auth.helper";
-import { sendOtp } from '../utils/auth.helper';
+import { checkOtpRestriction, trackOtpRequest, validateRegistrationData, sendOtp, verifyOtp } from "../utils/auth.helper";
 
 // Register a new User.
 export const userRegistration = async (req: Request, res: Response, next: NextFunction) =>{
@@ -28,3 +28,30 @@ export const userRegistration = async (req: Request, res: Response, next: NextFu
   }
 }
 
+export const verifyUser = async (req: Request, res:Response, next: NextFunction) =>{
+  try {
+    const {name, email, otp, password} = req.body;
+    if(!name || !email || !otp || !password){
+      return next(new ValidationError("All fields are required!"))
+    }
+
+    const existingUser = await prisma.users.findUnique({where: {email}});
+
+    if(existingUser){ return next(new ValidationError("User already exists with this email!"));}
+
+    await verifyOtp(email, otp, next);
+
+    const hashPassword = await bcrypt.hash(password, 10);
+
+    await prisma.users.create({
+      data: {name, email, password: hashPassword},
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+    })
+  } catch (error) {
+    return next(error);
+  } 
+}
