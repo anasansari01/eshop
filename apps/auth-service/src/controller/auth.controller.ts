@@ -1,8 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import prisma from "@packages/libs/prisma";
-import { ValidationError } from "@packages/error-handler";
+import jwt from 'jsonwebtoken'
+import { AuthError, ValidationError } from "@packages/error-handler";
 import { checkOtpRestriction, trackOtpRequest, validateRegistrationData, sendOtp, verifyOtp } from "../utils/auth.helper";
+import { setCookie } from "../utils/cookies/setCookie";
+import { name } from "ejs";
 
 // Register a new User.
 export const userRegistration = async (req: Request, res: Response, next: NextFunction) =>{
@@ -28,6 +31,7 @@ export const userRegistration = async (req: Request, res: Response, next: NextFu
   }
 }
 
+// Verify user with Otp
 export const verifyUser = async (req: Request, res:Response, next: NextFunction) =>{
   try {
     const {name, email, otp, password} = req.body;
@@ -54,4 +58,53 @@ export const verifyUser = async (req: Request, res:Response, next: NextFunction)
   } catch (error) {
     return next(error);
   } 
+}
+
+// login user
+export const loginUser = async (req: Request, res:Response, next: NextFunction) => {
+  try {
+    const {email, password} = req.body;
+
+    if(!email || ! password){
+      return next(new ValidationError("Email and password are required!"));
+    }
+
+    const user = await prisma.users.findUnique({where: {email}});
+    if(!user){
+      return next(new AuthError("User doesnt exist!"));
+    }
+    // verify password
+    const isMatch = await bcrypt.compare(password, user.password!);
+    if(!isMatch){
+      return next(new AuthError("Invalid email or password!"));
+    }
+
+    // Generate refresh access token
+    const accessToken = jwt.sign(
+      {id: user.id, role: "user"},
+      process.env.ACCESS_TOKEN_SECRET as string,
+      {
+      expiresIn: "15m"
+      }
+    );
+
+    const refreshToken = jwt.sign(
+      {id: user.id, role: "user"},
+      process.env.REFRESH_TOKEN_SECRET as string,
+      {
+      expiresIn: "7d"
+      }
+    );
+
+    // Store the refresh and access token in a httpOnly secure cookie.
+    setCookie(res, "refresh_token", refreshToken);
+    setCookie(res, "access_token", accessToken);
+
+    res.status(200).json({
+      message: "Login successfully!",
+      user: {id: user.id, name: user.name, email: user.email}
+    })
+  } catch (error) {
+    return next(error);
+  }
 }
