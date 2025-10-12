@@ -6,7 +6,9 @@
     "importHelpers": true,
     "isolatedModules": true,
     "baseUrl": ".",
-    "lib": ["es2022"],
+    "lib": [
+      "es2022"
+    ],
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "noEmitOnError": true,
@@ -17,11 +19,13 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
-    "customConditions": ["@my-workspace/source"],
+    "customConditions": [
+      "@my-workspace/source"
+    ],
     "paths": {
       "@packages/*": [
         "packages/*"
-      ] 
+      ]
     }
   }
 }
