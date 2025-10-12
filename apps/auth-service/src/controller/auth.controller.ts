@@ -3,9 +3,8 @@ import bcrypt from "bcryptjs";
 import prisma from "@packages/libs/prisma";
 import jwt from 'jsonwebtoken'
 import { AuthError, ValidationError } from "@packages/error-handler";
-import { checkOtpRestriction, trackOtpRequest, validateRegistrationData, sendOtp, verifyOtp } from "../utils/auth.helper";
+import { checkOtpRestriction, trackOtpRequest, validateRegistrationData, sendOtp, verifyOtp, handleForgotPassword, verifyForgotPasswordOtp } from "../utils/auth.helper";
 import { setCookie } from "../utils/cookies/setCookie";
-import { name } from "ejs";
 
 // Register a new User.
 export const userRegistration = async (req: Request, res: Response, next: NextFunction) =>{
@@ -106,5 +105,41 @@ export const loginUser = async (req: Request, res:Response, next: NextFunction) 
     })
   } catch (error) {
     return next(error);
+  }
+}
+
+// user forgot password
+export const userForgotPassword = async (req: Request, res: Response, next: NextFunction) => {
+  await handleForgotPassword(req, res, next, "user");
+}
+
+// Verify forgot password OTP
+export const verifyUserForgotPassword = async (req: Request, res: Response, next: NextFunction) => {
+  await verifyForgotPasswordOtp(req, res, next);
+}
+
+// Reset user password
+export const resetUserPassword = async (req: Request, res: Response, next: NextFunction) =>{
+  try {
+    const {email, newPassword} = req.body;
+    if(!email || !newPassword) return next(new ValidationError("Email and new password are required!"));
+
+    const user = await prisma.users.findUnique({where: {email}});
+    if(!user) return next(new ValidationError("User not found!"));
+
+    // Compare new password with the existing one.
+    const isSamePassword = await bcrypt.compare(newPassword, user.password!);
+
+    if(isSamePassword) return next(new ValidationError("New password cannot be the same as old password!"));
+   
+    const hashPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.users.update({where:{email}, data: {password: hashPassword}});
+
+    res.status(200).json({
+      message: "Password reset successfully!"
+    });
+  } catch (error) {
+    next(error);
   }
 }
