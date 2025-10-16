@@ -9,7 +9,7 @@ export const navItmes: NavItemsType[] = [
   },
   {
     title: "Shops",
-    href: "/shpps",
+    href: "/shops",
   },
   {
     title: "Offers",
