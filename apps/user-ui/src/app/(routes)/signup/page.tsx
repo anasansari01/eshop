@@ -184,6 +184,12 @@ const Signup = () => {
               >
                 {signUpMutation.isPending ? "Signing up..." : "Signup"}
               </button>
+              {signUpMutation.isError && signUpMutation.error instanceof AxiosError && (
+                <p className='text-red-500 text-sm mt-2'>
+                  {signUpMutation.error.response?.data?.message ||
+                  signUpMutation.error.message}
+                </p>
+              )}
             </form>
           ):(
             <div>
