@@ -135,8 +135,8 @@ const Signup = () => {
                   required: "Name is required",
                 })}
               />
-              {errors.email && (
-                <p className="text-red-500 text-sm">{String(errors.email.message)}</p>
+              {errors.name && (
+                <p className="text-red-500 text-sm">{String(errors.name.message)}</p>
               )}
               <label className='block text-gray-700 mb-1'>Email</label>
               <input
