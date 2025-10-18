@@ -212,3 +212,32 @@ export const registerSeller = async (req: Request, res: Response, next: NextFunc
     next(error);
   }
 }
+
+// Verify seller with Otp
+export const verifySeller = async (req: Request, res:Response, next: NextFunction) =>{
+  try {
+    const {name, email, otp, password, phone_number, country} = req.body;
+    if(!name || !email || !otp || !password || !phone_number || !country){
+      return next(new ValidationError("All fields are required!"))
+    }
+
+    const existingUser = await prisma.sellers.findUnique({where: {email}});
+
+    if(existingUser){ return next(new ValidationError("Seller already exists with this email!"));}
+
+    await verifyOtp(email, otp, next);
+
+    const hashPassword = await bcrypt.hash(password, 10);
+
+    await prisma.sellers.create({
+      data: {name, email, password: hashPassword, phone_number, country},
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Seller registered successfully",
+    })
+  } catch (error) {
+    return next(error);
+  }
+}
