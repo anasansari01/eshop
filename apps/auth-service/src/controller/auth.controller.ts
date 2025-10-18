@@ -241,3 +241,34 @@ export const verifySeller = async (req: Request, res:Response, next: NextFunctio
     return next(error);
   }
 }
+
+// Create a shop
+export const createShop = async (req: Request, res:Response, next: NextFunction) =>{
+  try {
+    const {name, bio, address, opening_hours, website, category, sellerId} = req.body;
+    if(!name  || !bio || !address ||  !opening_hours || !category || !sellerId){
+      throw next(new ValidationError("All fields are required!"));
+    }
+
+    const shopData : any= {
+      name,
+      bio,
+      address,
+      opening_hours, 
+      category,
+      sellerId,
+    };
+
+    if(website && website.trim() !== ""){
+      shopData.website = website;
+    }
+
+    const shop = await prisma.sellers.create({
+      data: shopData,
+    });
+
+    res.status(201).json({success: true, shop});
+  } catch (error) {
+    next(error);
+  }
+}
