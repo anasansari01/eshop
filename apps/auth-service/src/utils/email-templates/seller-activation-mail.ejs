@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Seller Account Activation</title>
+</head>
+<body style="margin:0;padding:0;background: #f3f7fb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color:#0f1724;">
+
+  <!-- Small style block (inside body per request) -->
+  <style>
+    @media only screen and (max-width:600px) {
+      .container { width:100% !important; padding:18px !important; }
+      .hero { padding:28px 18px !important; }
+      .otp { font-size:22px !important; letter-spacing:2px !important; }
+      .btn { width:100% !important; display:block !important; }
+    }
+  </style>
+
+  <!-- Email wrapper -->
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <!-- Card -->
+        <table class="container" width="600" cellpadding="0" cellspacing="0" role="presentation" style="width:600px; max-width:100%; background:linear-gradient(135deg,#ffffff 0%, #f7fbff 100%); border-radius:14px; box-shadow:0 8px 30px rgba(12, 40, 80, 0.08); overflow:hidden;">
+          
+          <!-- Top color band / hero -->
+          <tr>
+            <td class="hero" style="background: linear-gradient(90deg,#43cea2 0%, #185a9d 100%); padding:36px 40px; text-align:left;">
+              <!-- small logo-like element -->
+              <table cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
+                <tr>
+                  <td style="vertical-align:middle;">
+                    <div style="display:inline-block; width:48px; height:48px; border-radius:10px; background:rgba(255,255,255,0.18); text-align:center; line-height:48px; font-weight:700; color:#ffffff; font-size:20px;">
+                      S
+                    </div>
+                  </td>
+                  <td style="text-align:right; vertical-align:middle;">
+                    <p style="margin:0; color:rgba(255,255,255,0.95); font-size:14px;">Seller account activation</p>
+                  </td>
+                </tr>
+              </table>
+
+              <h1 style="margin:20px 0 6px; font-size:26px; line-height:1.1; color:#ffffff;">Welcome aboard, <%= name %> 🛍️</h1>
+              <p style="margin:0; color:rgba(255,255,255,0.95); font-size:15px; opacity:0.95; max-width:440px;">
+                Thanks for joining our seller community! You’re just one step away from activating your seller account. Use the code below to verify your email and start selling.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:28px 40px; background:transparent;">
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                
+                <!-- OTP block -->
+                <tr>
+                  <td style="padding:14px 0 22px;">
+                    <div style="display:inline-block; padding:18px 22px; border-radius:10px; background: linear-gradient(180deg,#0f1724 0%, #0b1220 100%); color:#fff; text-align:center;">
+                      <p style="margin:0 0 6px; font-size:13px; opacity:0.85;">Your activation code</p>
+                      <p class="otp" style="margin:0; font-size:28px; font-weight:700; letter-spacing:3px;">
+                        <%= otp %>
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Instruction -->
+                <tr>
+                  <td style="padding-bottom:16px;">
+                    <p style="margin:0; color:#0f1724; font-size:14px; line-height:1.5;">
+                      Enter this code in your seller portal to complete your account verification. The code expires in <strong>10 minutes</strong>. If you didn’t request this, you can safely ignore this message.
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Call to action -->
+                <tr>
+                  <td style="padding:12px 0 26px;">
+                    <a class="btn" href="#" style="text-decoration:none; display:inline-block; background:linear-gradient(90deg,#f7971e 0%, #ffd200 100%); padding:12px 20px; border-radius:10px; color:#fff; font-weight:600; box-shadow:0 6px 18px rgba(247,151,30,0.18);">
+                      Activate your seller account
+                    </a>
+                  </td>
+                </tr>
+
+                <!-- Helpful links -->
+                <tr>
+                  <td style="padding-top:4px; border-top:1px solid #e6eef9;">
+                    <p style="margin:12px 0 0; color:#40516a; font-size:13px;">
+                      Need help? Reply to this email or contact our <a href="mailto:support@example.com" style="color:#1e5aff; text-decoration:none;">seller support team</a>.
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:18px 40px 28px; background:linear-gradient(180deg, rgba(10,20,40,0.03), transparent); text-align:center; font-size:12px; color:#6b7480;">
+              <p style="margin:0 0 6px;">Marketplace Inc • 123 Commerce Rd • City, Country</p>
+              <p style="margin:0;">Didn’t sign up as a seller? Please ignore or <a href="#" style="color:#1e5aff; text-decoration:none;">report it</a>.</p>
+            </td>
+          </tr>
+
+        </table>
+        <!-- end card -->
+      </td>
+    </tr>
+  </table>
+
+  <!-- Plain-text fallback -->
+  <div style="display:none;visibility:hidden;opacity:0;height:0;width:0;overflow:hidden;">
+    Welcome, <%= name %> — Your seller activation code is <%= otp %>. Enter it in the seller portal to verify your account. The code expires in 10 minutes.
+  </div>
+
+</body>
+</html>
