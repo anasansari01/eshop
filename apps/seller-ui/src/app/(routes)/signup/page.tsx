@@ -7,9 +7,10 @@ import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
 import axios, {AxiosError} from 'axios'
 import { countries } from 'apps/seller-ui/src/utils/countries';
+import CreateShop from 'apps/seller-ui/src/shared/modules/create-shop';
 
 const Signup = () => {
-  const [activeStep, setActiveStep] = useState(1);
+  const [activeStep, setActiveStep] = useState(2);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
   const [canResend, setCanResend] = useState(true);
@@ -189,6 +190,9 @@ const Signup = () => {
                     </option>
                   ))}
                 </select>
+                {errors.country && (
+                  <p className="text-red-500 text-sm">{String(errors.country.message)}</p>
+                )}
 
                 <label className='block text-gray-700 mb-1'>Password</label>
                 <div className='relative'>
@@ -281,6 +285,9 @@ const Signup = () => {
               </div>
             )}
           </>
+        )}
+        {activeStep === 2 && (
+          <CreateShop sellerId={sellerId} setActiveStep={setActiveStep}/>
         )}
       </div>
     </div>
