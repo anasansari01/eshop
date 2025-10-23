@@ -1,5 +1,4 @@
 "use client"
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form'
 import React, { useRef, useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react';
@@ -8,9 +7,10 @@ import Link from 'next/link';
 import axios, {AxiosError} from 'axios'
 import { countries } from 'apps/seller-ui/src/utils/countries';
 import CreateShop from 'apps/seller-ui/src/shared/modules/create-shop';
+import StripeLogo from 'apps/seller-ui/src/assets/svgs/stripe-logo';
 
 const Signup = () => {
-  const [activeStep, setActiveStep] = useState(2);
+  const [activeStep, setActiveStep] = useState(3);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
   const [canResend, setCanResend] = useState(true);
@@ -20,8 +20,6 @@ const Signup = () => {
   const [sellerId, setSellerId] = useState("");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
  
-  const router = useRouter();
-
   const {register, handleSubmit, formState: {errors}} = useForm();
 
   const setResentTimer = () => {
@@ -94,6 +92,18 @@ const Signup = () => {
       signUpMutation.mutate(sellerData);
     }
   }
+
+  const connectStripe = async () => {
+    try {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_SERVER_URI}/api/create-stripe-link`, {sellerId});
+
+      if(response.data.url){
+        window.location.href = response.data.url;
+      }
+    } catch (error) {
+      console.error("Stripe Connection error: ", error);
+    }
+}
   
 
   return (
@@ -288,6 +298,15 @@ const Signup = () => {
         )}
         {activeStep === 2 && (
           <CreateShop sellerId={sellerId} setActiveStep={setActiveStep}/>
+        )}
+        {activeStep === 3 && (
+          <div className='text-center'>
+            <h3 className='text-2xl font-semibold'>Withdraw Method</h3>
+            <br />  
+            <button className='w-full m-auto flex items-center justify-center gap-3 text-lg bg-[#334115] text-white py-2 rounded-lg' onClick={connectStripe}>
+              Connect Stripe <StripeLogo/>
+            </button>
+          </div>
         )}
       </div>
     </div>
