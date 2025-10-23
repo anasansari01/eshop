@@ -203,7 +203,7 @@ export const registerSeller = async (req: Request, res: Response, next: NextFunc
 
     await checkOtpRestriction(email, next);
     await trackOtpRequest(email, next);
-    await sendOtp(name, email, "seller-activation");
+    await sendOtp(name, email, "seller-activation-mail");
 
     res.status(200).json({
       message: "OTP sent to email. Please verify your account."
@@ -272,3 +272,5 @@ export const createShop = async (req: Request, res:Response, next: NextFunction)
     next(error);
   }
 }
+
+// Create stripe connect account link
