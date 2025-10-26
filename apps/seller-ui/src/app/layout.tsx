@@ -1,10 +1,16 @@
 import './global.css';
-import Providers from './Providers';
+import {Poppins} from "next/font/google";
 
 export const metadata = {
-  title: 'Eshop Seller',
-  description: 'Sell product through Eshop seller.',
+  title: 'Eshop',
+  description: 'Welcome to Eshop!',
 }
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  variable: "--font-poppins",
+});
 
 export default function RootLayout({
   children,
@@ -13,10 +19,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
-        <Providers>
-          {children}
-        </Providers>
+      <body className={`min-h-screen bg-slate-900 font-sans antialiased  ${poppins.variable}`}>
+        {children}
       </body>
     </html>
   )
