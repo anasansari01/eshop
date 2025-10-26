@@ -118,9 +118,9 @@ const CreateShop = ({
         {errors.category && (
           <p className="text-red-500 text-sm">{String(errors.category.message)}</p>
         )}
-      <button type={"submit"} className='w-full mt-4 text-lg cursor-pointer bg-blue-600 text-white py-2 rounded-lg'
+      <button type={"submit"} disabled={createShopMutation.isPending} className='w-full mt-4 text-lg cursor-pointer bg-blue-600 text-white py-2 rounded-lg'
       >
-        Create
+        {createShopMutation.isPending ? "Creating..." : "Create"}
       </button>
       </form>
     </div>

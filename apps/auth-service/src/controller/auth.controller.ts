@@ -8,7 +8,7 @@ import { setCookie } from "../utils/cookies/setCookie";
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY! ,{
-  apiVersion: "2025-09-30.clover",
+  apiVersion: "2024-06-20" as any,
 })
 
 // Register a new User.
@@ -234,12 +234,12 @@ export const verifySeller = async (req: Request, res:Response, next: NextFunctio
 
     const hashPassword = await bcrypt.hash(password, 10);
 
-    await prisma.sellers.create({
+    const seller = await prisma.sellers.create({
       data: {name, email, password: hashPassword, phone_number, country},
     });
 
     return res.status(201).json({
-      success: true,
+      seller,
       message: "Seller registered successfully",
     })
   } catch (error) {
@@ -268,7 +268,7 @@ export const createShop = async (req: Request, res:Response, next: NextFunction)
       shopData.website = website;
     }
 
-    const shop = await prisma.sellers.create({
+    const shop = await prisma.shops.create({
       data: shopData,
     });
 
@@ -281,45 +281,47 @@ export const createShop = async (req: Request, res:Response, next: NextFunction)
 // Create stripe connect account link
 export const createStripeConnectLink = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const {sellerId} = req.body;
+    const { sellerId } = req.body;
 
-    if(!sellerId) return next(new ValidationError("Seller ID is required!"));
+    if (!sellerId) return next(new ValidationError("Seller ID is required!"));
 
-    const seller = await prisma.sellers.findUnique({where: {id: sellerId}});
+    const seller = await prisma.sellers.findUnique({ where: { id: sellerId } });
 
-    if(!seller) return next(new ValidationError("Seller is not available with this id!"));
+    if (!seller) return next(new ValidationError("Seller is not available with this id!"));
 
-    const account = await stripe.accounts.create({
-      type: "express",
-      email: seller?.email,
-      country: "IN",
-      capabilities: {
-        card_payments: {requested: true},
-        transfers: {requested: true},
-      }
-    });
+    let accountId = seller.stripeId;
 
-    await prisma.sellers.update({
-      where: {
-        id: sellerId,
-      },
-      data: {
-        stripeId: account.id,
-      }
-    });
+    if (!accountId) {
+      const account = await stripe.accounts.create({
+        type: "express",
+        email: seller.email,
+        country: "AE",
+        capabilities: {
+          // card_payments: { requested: true },
+          transfers: { requested: true },
+        },
+      });
+
+      await prisma.sellers.update({
+        where: { id: sellerId },
+        data: { stripeId: account.id },
+      });
+
+      accountId = account.id;
+    }
 
     const accountLink = await stripe.accountLinks.create({
-      account: account.id,
+      account: accountId,
       refresh_url: `http://localhost:3000/success`,
       return_url: `http://localhost:3000/success`,
-      type: "account_onboarding"
+      type: "account_onboarding",
     });
 
-    res.json({url: accountLink.url});
+    res.json({ url: accountLink.url });
   } catch (error) {
     return next(error);
   }
-}
+};
 
 // Login seller
 export const loginSeller = async (req: Request, res:Response, next: NextFunction) => {
