@@ -1,5 +1,6 @@
 import './global.css';
 import {Poppins} from "next/font/google";
+import Providers from './Providers';
 
 export const metadata = {
   title: 'Eshop',
@@ -20,7 +21,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`min-h-screen bg-slate-900 font-sans antialiased  ${poppins.variable}`}>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   )
