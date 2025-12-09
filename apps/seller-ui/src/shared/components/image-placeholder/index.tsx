@@ -9,15 +9,21 @@ const ImagePlaceholder = ({
   onRemove,
   defaultImage = null,
   index = 0,
-  setOpenImageModal
+  setOpenImageModal,
+  setSelectedImage,
+  pictureUploadingLoader,
+  images,
 }:{
-  size: string, 
-  small?: boolean, 
+  size: string;
+  small?: boolean;
   onImageChange: (file: File | null , index: number) => void;
   onRemove: (index: number) => void;
   setOpenImageModal: (openImageModal: boolean) => void;
-  index?: number
-  defaultImage?: string | null
+  setSelectedImage: (e:string) => void;
+  images: any;
+  index?: number;
+  defaultImage?: string | null;
+  pictureUploadingLoader: boolean;
 }) => {
 
   const [imagePreview, setImagePreview] = useState<string | null>(defaultImage);
@@ -40,15 +46,23 @@ const ImagePlaceholder = ({
       />
       {imagePreview ? (
         <>
-          <button type='button' onClick={()=>onRemove(index ?? 0)}
+          <button 
+            disabled={pictureUploadingLoader}
+            type='button'
+            onClick={()=>onRemove?.(index!)}
             className='absolute top-3 right-3 p-2 !rounded bg-red-600 shadow-lg'
             aria-label="Remove Image"
           >
             <X size={16} />
           </button>
-          <button className='absolute top-3 right-[70px] p-2 !rounded bg-blue-500 shadow-lg cursor-pointer'
-            onClick={()=> setOpenImageModal(true)}
-            aria-label="Edit Image"
+          <button 
+            disabled={pictureUploadingLoader}
+            type="button"
+            className="absolute top-3 right-[70px] p-2 !rounded bg-blue-500 shadow-lg cursor-pointer"
+            onClick={() => {
+              setOpenImageModal(true);
+              setSelectedImage(images[index]?.file_url);
+            }}
           >
             <WandSparkles size={16}/>
           </button>
