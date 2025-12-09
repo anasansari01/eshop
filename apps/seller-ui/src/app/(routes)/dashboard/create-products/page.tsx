@@ -1,22 +1,35 @@
 'use client'
 import { useQuery } from '@tanstack/react-query';
 import ImagePlaceholder from 'apps/seller-ui/src/shared/components/image-placeholder';
+import { enchancement } from 'apps/seller-ui/src/utils/AI.enchancement';
 import axiosInstance from 'apps/seller-ui/src/utils/axiosInstance';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Wand, X } from 'lucide-react';
+import Image from 'next/image';
 import ColorSelector from 'packages/components/color-selector';
 import CustomProperties from 'packages/components/custom-properties';
 import CustomSpecifications from 'packages/components/custom-specifications';
 import Input from 'packages/components/input';
+import RichTextEditor from 'packages/components/rich-text-editor';
+import SizeSelector from 'packages/components/size-selector';
 import React, { useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
+
+interface UploadedImage {
+  fileId: string,
+  file_url: string,
+};
 
 const page = () => {
   const {register, control, watch, setValue, handleSubmit, formState: {errors}} = useForm();
 
   const [openImageModal, setOpenImageModal] = useState(false);
   const [isChanged, setIsChanged] = useState(false);
-  const [images, setImages] = useState<(File | null)[]>([null]);
+  const [activeEffect, setActiveEffect] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState('');
+  const [pictureUploadingLoader, setPictureUploadingLoader] = useState(false);
+  const [images, setImages] = useState<(UploadedImage | null)[]>([null]);
   const [loading, setLoading] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
   const {data, isLoading, isError} = useQuery({
     queryKey: ["categories"],
@@ -32,6 +45,15 @@ const page = () => {
     retry: 2,
   });
 
+  const {data: discountCodes = [], isLoading: discountLoading} = useQuery({
+      queryKey: ["shop-discounts"],
+      queryFn:  async () => {
+        const res = await axiosInstance.get("/product/api/get-discount-codes");
+        console.log(res);
+        return res?.data?.discount_codes || [];
+      }
+    });
+
   const categories = data?.categories || [];
   const subCategoriesData = data?.subCategories || {};
 
@@ -46,36 +68,88 @@ const page = () => {
     console.log(data);
   };
 
-  const handleImageChange = (file: File | null, index: number) => {
-    const updateImages = [...images];
+  const convertToBase64 = (file: File) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    })
+  }
 
-    updateImages[index] = file;
+  const handleImageChange = async (file: File | null, index: number) => {
+    if(!file) return;
+    setPictureUploadingLoader(true);
+    try {
+      const fileName = await convertToBase64(file);
 
-    if(index === images.length && images.length < 8){
-      updateImages.push(null);
-    }
+      const response = await axiosInstance.post(`/product/api/upload-product-image`, {fileName});
 
-    setImages(updateImages);
-    setValue("images", updateImages);
-  };
-
-  const handleRemoveChange = (index: number) => {
-    setImages((prevImages) => {
-      let updatedImages = [...prevImages];
-
-      if(index === -1){
-        updatedImages[0] = null;
-      }else{
-        updatedImages.splice(index, 1);
+      const uploadedImage: UploadedImage = {
+        fileId: response.data.fileId,
+        file_url: response.data.file_url
       }
       
-      if(!updatedImages.includes(null) && updatedImages.length < 8){
+      const updatedImages = [...images];
+
+      updatedImages[index] = uploadedImage;
+
+      if(index === images.length-1 && updatedImages.length<8){
         updatedImages.push(null);
       }
-      return updatedImages;
-    });
-    setValue("images", images);
+
+      setImages(updatedImages);
+      setValue("images", updatedImages);
+    } catch (error) {
+      console.log(error);   
+    } finally{
+      setPictureUploadingLoader(false);
+    }
+  };
+
+  const handleRemoveChange = async (index: number) => {
+    try {
+      const updatedImages = [...images];
+      const imageToDelete = updatedImages[index];
+
+      if(imageToDelete && typeof imageToDelete === "object"){
+        await axiosInstance.delete("/product/api/delete-product-image", {
+          data: { 
+          fileId: imageToDelete.fileId,
+          }
+        });
+      }
+
+      updatedImages.splice(index, 1);
+
+      // add null placeholder
+      if(!updatedImages.includes(null) && updatedImages.length<8){
+        updatedImages.push(null);
+      }
+
+      setImages(updatedImages);
+      setValue("images", updatedImages);
+
+    } catch (error) {
+      console.log(error);
+    }
   }
+
+  const applyTransformation = async (transformation: string) => {
+    if(!selectedImage || processing) return;
+    setProcessing(true);
+    setActiveEffect(transformation);
+    try {
+      const transformedUrl = `${selectedImage}?tr=${transformation}`;
+      setSelectedImage(transformedUrl);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setProcessing(false);
+    }
+  }
+
+  const handleSaveDraft = () => {}
 
   return (
     <form className='w-full mx-auto p-8 shadow-md rounded-lg text-white'
@@ -95,12 +169,15 @@ const page = () => {
         {/*  Left side - Image upload section */}
         <div className='md:w-[35%]'>
           {images?.length > 0 && (
-            <ImagePlaceholder 
+            <ImagePlaceholder
             setOpenImageModal={setOpenImageModal}
             size='768 x 850'
             small={false}
+            images={images}
             index={0}
             onImageChange={handleImageChange}
+            pictureUploadingLoader={pictureUploadingLoader}
+            setSelectedImage={setSelectedImage}
             onRemove={handleRemoveChange}
             />
           )}
@@ -111,8 +188,11 @@ const page = () => {
               size='768 x 850'
               key={index}
               small={true}
+              images={images}
               index={index + 1}
               onImageChange={handleImageChange}
+              pictureUploadingLoader={pictureUploadingLoader}
+              setSelectedImage={setSelectedImage}
               onRemove={handleRemoveChange}
               />
             ))}
@@ -314,11 +394,216 @@ const page = () => {
                       )}
                   </div>
                   <div className="mt-2">
-                    
+                    <label className="block font-semibold text-gray-300 mb-1">
+                      Detailed Description * (Min 100 words)
+                    </label>
+                    <Controller
+                      name='detailed_description'
+                      control={control}
+                      rules={{
+                        required:"Detailed description is required!",
+                        validate: (value) => {
+                          const wordCount = value?.split(/\s+/).filter((word: string) => word).length;
+                          return(
+                            wordCount>=100 || "Description must be atleast 100 words!"
+                          );
+                        },
+                      }}
+                      render={({field})=>(
+                        <RichTextEditor
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
+                      )}
+                    />
+                    {errors.detailed_description && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.detailed_description.message as string}
+                        </p>
+                      )}
+                  </div>
+                  <div className="mt-2">
+                    <Input 
+                      label='Video URL'
+                      placeholder='https://www.youtube.com/embed/xyz123'
+                      {...register("video_url", {
+                        pattern: {
+                          value: /^https:\/\/(www\.)?.youtube\.com\/embed\/[a-zA-z0-9_-]+$/,
+                          message:"Invalid YouTube embed URL! Use format: https://www.youtube.com/embed/xyz123",
+                        },
+                      })}
+                    />
+                    {errors.video_url && (
+                      <p className='text-red-500 text-xs  mt-1'>
+                        {errors.video_url.message as string}
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-2">
+                    <Input 
+                      label='Regular Price'
+                      placeholder='20$'
+                      {...register("regular_price", {
+                        required: "Regular price is required",
+                        valueAsNumber: true,
+                        min: {value: 1, message: "Price must be at least 1"},
+                        validate: (value) => 
+                          !isNaN(value) || "Only  numbers are allowed",
+                      })}
+                    />
+                    {errors.regular_price && (
+                      <p className='text-red-500 text-xs  mt-1'>
+                        {errors.regular_price.message as string}
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-2">
+                    <Input 
+                      label='Sales Price'
+                      placeholder='15$'
+                      {...register("sales_price", {
+                        required: "Sales price is required",
+                        valueAsNumber: true,
+                        min: {value: 1, message: "Sales Price must be at least 1"},
+                        validate: (value) => {
+                          if(isNaN(value)){ return "Only  numbers are allowed"};
+                          if(regularPrice && value >= regularPrice){
+                            return "Sales Price must be less than Regular Price"
+                          }
+                          return true;
+                        }
+                      })}
+                    />
+                    {errors.sales_price && (
+                      <p className='text-red-500 text-xs  mt-1'>
+                        {errors.sales_price.message as string}
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-2">
+                    <Input 
+                      label='Stock *'
+                      placeholder='100'
+                      {...register("stock", {
+                        required: "Stock is required",
+                        valueAsNumber: true,
+                        min: {value: 1, message: "Stock must be at least 1"},
+                        max: {
+                          value: 1000,
+                          message: "Stock cannot exceeds 1000"
+                        },
+                        validate: (value) => {
+                          if(isNaN(value)){ return "Only  numbers are allowed"};
+                          if(!Number.isInteger(value)){
+                            return "Stock must be a Whole number!"
+                          }
+                          return true;
+                        },
+                      })}
+                    />
+                    {errors.stock && (
+                      <p className='text-red-500 text-xs  mt-1'>
+                        {errors.stock.message as string}
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-2">
+                    <SizeSelector control={control} errors={errors}/>
+                  </div>
+                  <div className='mt-3'>
+                    <label className='block font-semibold text-gray-300 mb-1'>Select Discount Codes (Optional)</label>
+                    {discountLoading ? (
+                      <p className='text-gray-400'>Loading discount codes...</p>
+                    ):(
+                      <div className='flex flex-wrap gap-2'>
+                        {discountCodes?.map((code: any) => {
+                          const selected = watch("discountCodes") || [];
+                          const codeId = String(code.id);
+
+                          return (
+                            <button
+                              key={code.id}
+                              type='button'
+                              className={`px-3 py-1 rounded-md text-sm font-semibold border ${
+                                selected.includes(codeId)
+                                  ? "bg-blue-600 text-white border-blue-600"
+                                  : "bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700"
+                              }`}
+                              onClick={() => {
+                                const updatedSelection = selected.includes(codeId)
+                                  ? selected.filter((id: string) => id !== codeId)
+                                  : [...selected, codeId];
+
+                                setValue("discountCodes", updatedSelection);
+                              }}
+                            >
+                              {code.public_name} ({code.discountValue})
+                              {code.discountType === "percentage" ? "%" : "$"}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
             </div>
           </div>
         </div>
+      </div>  
+
+      {openImageModal && (
+        <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-60 z-50">
+          <div className='bg-gray-800 text-white p-6 rounded-lg w-[450px]'>
+            <div className='flex justify-between items-center pb-3 mb-3'>
+              <h2 className='font-semibold text-lg'>Enhance Product Image</h2>
+              <X size={20} className='cursor-pointer' onClick={()=>setOpenImageModal(!openImageModal)}/>
+            </div>
+            <div className='relative w-full h-[250px] border border-gray-600 rounded-md overflow-hidden'>
+              <Image 
+                src={selectedImage}
+                alt="product-image"
+                fill
+              />
+            </div>
+            {selectedImage && (
+              <div className='mt-4 space-y-2'>
+                <h3 className='text-sm text-white font-semibold'>
+                  AI Enhancement
+                </h3>
+                <div className='grid grid-cols-2 gap-3 mx-h-[250px] overflow-y-auto'>
+                  {enchancement?.map(({label, effect})=>(
+                    <button 
+                      key={effect}
+                      className={`p-2 rounded-md flex items-center gap-2 ${activeEffect === effect ? "bg-blue-600 text-white" : "bg-gray-700 hover:bg-gray-600"}`}
+                      onClick={()=>applyTransformation(effect)}
+                      disabled={processing}
+                    >
+                      <Wand size={20}/>{label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-6 justify-end flex gap-3">
+        {isChanged && (
+          <button 
+          type='button'
+          onClick={handleSaveDraft}
+          className='px-4 py-2 bg-gray-700 text-white rounded-md'
+          >
+            Save Draft
+          </button>
+        )}
+          <button 
+          type='button'
+          className='px-4 py-2 bg-blue-600 text-white rounded-md'
+          disabled={loading}
+          >
+            {loading ? "Creating..." : "Create"}
+          </button>
       </div>
     </form>
   )
