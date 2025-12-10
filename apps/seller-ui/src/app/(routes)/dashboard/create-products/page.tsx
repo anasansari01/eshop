@@ -5,6 +5,7 @@ import { enchancement } from 'apps/seller-ui/src/utils/AI.enchancement';
 import axiosInstance from 'apps/seller-ui/src/utils/axiosInstance';
 import { ChevronRight, Wand, X } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import ColorSelector from 'packages/components/color-selector';
 import CustomProperties from 'packages/components/custom-properties';
 import CustomSpecifications from 'packages/components/custom-specifications';
@@ -13,6 +14,7 @@ import RichTextEditor from 'packages/components/rich-text-editor';
 import SizeSelector from 'packages/components/size-selector';
 import React, { useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
+import toast from 'react-hot-toast';
 
 interface UploadedImage {
   fileId: string,
@@ -30,6 +32,7 @@ const page = () => {
   const [images, setImages] = useState<(UploadedImage | null)[]>([null]);
   const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const router = useRouter();
 
   const {data, isLoading, isError} = useQuery({
     queryKey: ["categories"],
@@ -64,8 +67,16 @@ const page = () => {
     return selectedCategory ? subCategoriesData[selectedCategory] || []:[];
   }, [selectedCategory, subCategoriesData]);
 
-  const onSubmit = (data: any) => {
-    console.log(data);
+  const onSubmit = async (data: any) => {
+    try {
+      setLoading(true);
+      await axiosInstance.post("/product/api/create-product", data);
+      router.push("/dashboard/all-products");
+    } catch (error:any) {
+      toast.error(error?.data?.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const convertToBase64 = (file: File) => {
@@ -220,7 +231,7 @@ const page = () => {
                   rows={7}
                   cols={10}
                   type='textarea'
-                  {...register("description", {required: "Description is required!",
+                  {...register("short_description", {required: "Description is required!",
                     validate: (value) => {
                       const wordCount = value.trim().split(/\s+/).length;
                       return(
@@ -229,9 +240,9 @@ const page = () => {
                     },
                   })}
                 /> 
-                {errors.description && (
+                {errors.short_description && (
                   <p className='text-red-500 text-xs mt-1'>
-                    {errors.description.message as string}
+                    {errors.short_description.message as string}
                   </p>
                 )}
               </div>
@@ -307,7 +318,7 @@ const page = () => {
                 <CustomProperties control={control} errors={errors}/>
               </div>
               <div className="mt-2">
-                <label className="block font-semibold text-gray-300 mb-1">
+                <label className="block font-semibold text-gray-300 mb-1 rounded-lg">
                   Cash On Delivery *
                 </label>
                 <select 
@@ -333,7 +344,7 @@ const page = () => {
             </div>
             <div className="w-2/4">
                   <label className="block font-semibold text-gray-300 mb-1">
-                    Category <span className='text-red-500'>*</span>
+                    Category *
                   </label>
                   {
                     isLoading ? (
@@ -370,7 +381,7 @@ const page = () => {
                       Subcategory *
                     </label>
                     <Controller
-                        name='subcategory'
+                        name='subCategory'
                         control={control}
                         rules={{required: "Subcategories is required"}}
                         render={({field}) => (
@@ -387,9 +398,9 @@ const page = () => {
                           </select>
                         )}
                       />
-                      {errors.subcategory && (
+                      {errors.subCategory && (
                         <p className="text-red-500 text-xs mt-1">
-                          {errors.subcategory.message as string}
+                          {errors.subCategory.message as string}
                         </p>
                       )}
                   </div>
@@ -428,8 +439,8 @@ const page = () => {
                       placeholder='https://www.youtube.com/embed/xyz123'
                       {...register("video_url", {
                         pattern: {
-                          value: /^https:\/\/(www\.)?.youtube\.com\/embed\/[a-zA-z0-9_-]+$/,
-                          message:"Invalid YouTube embed URL! Use format: https://www.youtube.com/embed/xyz123",
+                          value: /^(https?:\/\/)?(www\.)?youtube\.com\/embed\/[A-Za-z0-9_-]{11}$/,
+                          message: "Invalid YouTube embed URL! Expected format: https://www.youtube.com/embed/xyz123",
                         },
                       })}
                     />
@@ -461,7 +472,7 @@ const page = () => {
                     <Input 
                       label='Sales Price'
                       placeholder='15$'
-                      {...register("sales_price", {
+                      {...register("sale_price", {
                         required: "Sales price is required",
                         valueAsNumber: true,
                         min: {value: 1, message: "Sales Price must be at least 1"},
@@ -474,9 +485,9 @@ const page = () => {
                         }
                       })}
                     />
-                    {errors.sales_price && (
+                    {errors.sale_price && (
                       <p className='text-red-500 text-xs  mt-1'>
-                        {errors.sales_price.message as string}
+                        {errors.sale_price.message as string}
                       </p>
                     )}
                   </div>
@@ -598,7 +609,7 @@ const page = () => {
           </button>
         )}
           <button 
-          type='button'
+          type='submit'
           className='px-4 py-2 bg-blue-600 text-white rounded-md'
           disabled={loading}
           >
