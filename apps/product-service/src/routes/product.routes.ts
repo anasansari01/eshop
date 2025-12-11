@@ -1,5 +1,5 @@
 import express, { Router } from 'express';
-import { createDiscountCode, createProduct, deleteDiscountCodes, deleteProductImage, getCategories, getDiscountCodes, getShopProduct, uploadProductImage } from '../controller/product.controller';
+import { createDiscountCode, createProduct, deleteDiscountCodes, deleteProduct, deleteProductImage, getCategories, getDiscountCodes, getShopProduct, restoreProduct, uploadProductImage } from '../controller/product.controller';
 import isAuthenticated from '@packages/middleware/isAuthenticated';
 
 const router: Router = express.Router();
@@ -12,5 +12,7 @@ router.post("/upload-product-image", isAuthenticated, uploadProductImage);
 router.delete("/delete-product-image", isAuthenticated, deleteProductImage);
 router.post("/create-product", isAuthenticated, createProduct);
 router.get("/get-shop-products", isAuthenticated, getShopProduct);
+router.delete("/delete-product/:productId", isAuthenticated, deleteProduct);
+router.put("/restore-product/:productId", isAuthenticated, restoreProduct);
 
 export default router;
