@@ -5,6 +5,7 @@ import { enchancement } from 'apps/seller-ui/src/utils/AI.enchancement';
 import axiosInstance from 'apps/seller-ui/src/utils/axiosInstance';
 import { ChevronRight, Wand, X } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ColorSelector from 'packages/components/color-selector';
 import CustomProperties from 'packages/components/custom-properties';
@@ -170,10 +171,10 @@ const page = () => {
       <h2 className='text-2xl py-2 font-semibold font-Poppins text-white'>
         Create Products
       </h2>
-      <div className='flex items-center'>
-        <span className='text-[#80Deea] cursor-pointer'>Dashboard</span>
-        <ChevronRight size={20} className='opacity-[.8]'/>
-        <span>Create Product</span>
+      <div className='flex items-center mb-4'>
+        <Link href={"/dashboard"} className='text-blue-400 cursor-pointer'>Dashboard</Link>
+        <ChevronRight size={20} className='text-gray-200'/>
+        <span className='text-white'>Create Product</span>
       </div>
       {/* Content Layout */}
       <div className='py-4 w-full flex gap-6'>
