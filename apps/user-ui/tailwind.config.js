@@ -10,7 +10,8 @@ module.exports = {
     extend: {
       fontFamily: {
         Roboto: ["var(--font-roboto)"],
-        poppins: ["var(--font-poppins)"]
+        poppins: ["var(--font-poppins)"],
+        Oregano: ["var(--font-oregano)"],
       }
     },
   },
