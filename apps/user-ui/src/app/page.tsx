@@ -1,9 +1,10 @@
 import React from 'react'
+import Hero from '../shared/modules/hero'
 
 const page = () => {
   return (
-    <div className=''>
-      
+    <div className='bg-[#f5f5f5]'>
+      <Hero/>
     </div>
   )
 }
