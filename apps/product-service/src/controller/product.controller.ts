@@ -392,3 +392,63 @@ export const getAllProducts = async (
     next(error);
   }
 };
+
+// search products
+export const searchProducts = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const searchQuery = String(req.query.q || "").trim();
+
+    if (!searchQuery) {
+      return next(new ValidationError("Search query is required"));
+    }
+
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const limit = Math.max(Number(req.query.limit) || 20, 1);
+    const skip = (page - 1) * limit;
+
+    const baseFilter: Prisma.productsWhereInput = {
+      AND: [
+        {
+          OR: [
+            { title: { contains: searchQuery, mode: "insensitive" } },
+            { short_description: { contains: searchQuery, mode: "insensitive" } },
+            { tags: { has: searchQuery } },
+            { brand: { contains: searchQuery, mode: "insensitive" } },
+            { category: { contains: searchQuery, mode: "insensitive" } },
+            { subCategory: { contains: searchQuery, mode: "insensitive" } },
+          ],
+        },
+        { isDeleted: false },
+        { status: "Active" },
+      ],
+    };
+
+    const [products, total] = await Promise.all([
+      prisma.products.findMany({
+        skip,
+        take: limit,
+        where: baseFilter,
+        orderBy: { createdAt: "desc" },
+        include: {
+          images: true,
+          Shop: true,
+        },
+      }),
+
+      prisma.products.count({
+        where: baseFilter,
+      }),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      query: searchQuery,
+      products,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
